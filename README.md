@@ -210,20 +210,26 @@ are never reached on a failed search. I verified the branch by running
 
 ## Spec Reflection
 
-The implementation matches the planning.md design closely; the loop's single
-decision point and the session-as-state approach are exactly as specified. Two
-notable points:
+**One way the spec helped:** drawing the agent diagram in planning.md *before*
+coding — specifically the early-exit branch on `results=[]` and the deliberate
+choice to treat an empty wardrobe as a normal branch rather than an error — gave
+me a concrete shape to check generated code against. When the AI's first
+planning-loop draft called all three tools unconditionally, I could see at a
+glance that it didn't match the diagram's branch, and I knew exactly what to fix
+(return early after setting `error`). The spec turned a vague "does this look
+right?" into a precise diff against a picture.
 
-- **Query parsing stayed inline.** planning.md flagged a possible fourth
-  `parse_query` LLM tool but committed to inline regex for the core build — that
-  held up. The one rough edge: stripping the price phrase can leave a stray
-  space in the description (e.g. `"vintage graphic tee ."`), but since
-  `search_listings` tokenizes and drops punctuation/stopwords, scoring is
-  unaffected.
-- **The empty-wardrobe case is deliberately *not* an error.** It would have been
-  easy to treat it as one; designing the branch up front in planning.md made it
-  clear it should fall back to general advice and let the pipeline continue, so
-  a brand-new user with no wardrobe still gets outfit ideas and a fit card.
+**One way the implementation diverged, and why:** planning.md's walkthrough
+assumed the parse step would yield a clean keyword `description` (e.g. just
+`"vintage graphic tee"`). In practice my regex parser only strips the price and
+size phrases, so the description still carries filler words (`"I'm looking for a
+vintage graphic tee . I mostly wear baggy jeans..."`). I chose to accept this
+divergence rather than build the LLM-backed `parse_query` tool I had floated as a
+stretch idea: `search_listings` tokenizes the description and drops
+stopwords/punctuation before scoring, so the leftover filler has no effect on
+match quality, and avoiding an extra LLM call keeps each query faster and
+cheaper. The cost (a slightly messy intermediate string) wasn't worth a more
+complex parser for the core build.
 
 ---
 
