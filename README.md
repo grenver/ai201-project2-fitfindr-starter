@@ -11,6 +11,8 @@ decides, based on what each tool returns, whether to keep going or stop and
 explain what went wrong. See [planning.md](planning.md) for the full design
 spec and agent diagram.
 
+**🎥 Demo video:** https://www.loom.com/share/6a09c8666b834d0fa03c26996c52c501
+
 ---
 
 ## Setup
